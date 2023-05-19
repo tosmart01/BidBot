@@ -97,7 +97,8 @@ class BaseProxy(ABC):
         total = max_page * 40
         rs = []
         for i in response_list:
-            rs.extend(i[0])
+            if i:
+                rs.extend(i[0])
         return rs, total
 
     def execute(self, body) -> Tuple:
