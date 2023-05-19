@@ -149,6 +149,8 @@ class CCGPProxy(BaseProxy):
         driver.delete_all_cookies()
         driver.get(url)
         driver.delete_all_cookies()
+        driver.get(url)
+        driver.delete_all_cookies()
         logger.info(f"{self.source} url={url}, page={driver.page_source}")
         driver.find_element(value='inpDisplayZone').click()
         driver.delete_all_cookies()
