@@ -1,0 +1,41 @@
+<form method="POST">
+    {% csrf_token %}
+
+    <ul id="provinces"></ul>
+    <input type="hidden" id="province_input" name="province">
+
+    <ul id="cities" style="display: none;"></ul>
+    <input type="hidden" id="city_input" name="city">
+
+    <input type="submit" value="Submit">
+</form>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    var data = {{ data|safe }};
+
+    $(document).ready(function () {
+        var provinces_ul = $('#provinces');
+        var cities_ul = $('#cities');
+        var province_input = $('#province_input');
+        var city_input = $('#city_input');
+
+        for (var province in data) {
+            provinces_ul.append('<li data-province="' + province + '">' + province + '</li>');
+        }
+
+        provinces_ul.on('click', 'li', function () {
+            cities_ul.empty().show();
+            var province = $(this).data('province');
+            province_input.val(province);
+
+            for (var i in data[province]) {
+                cities_ul.append('<li>' + data[province][i] + '</li>');
+            }
+        });
+
+        cities_ul.on('click', 'li', function () {
+            city_input.val($(this).text());
+        });
+    });
+</script>

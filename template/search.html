@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>招标查询</title>
+    {% load static %}
+    <!-- Add CSS and JavaScript here -->
+
+    <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+    <script src="https://code.jquery.com/jquery-3.1.0.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            function submitFormWithPage(page) {
+                // Remove old "page" input if it exists
+                $('input[name="page"]').remove();
+                $('<input>').attr({
+                    type: 'hidden',
+                    name: 'page',
+                    value: page
+                }).appendTo('form');
+                $('form').submit();
+            }
+
+            var buttonPressed = '';
+
+            $('input[name="button"]').on('click', function () {
+                // 设置被按下按钮的值
+                buttonPressed = $(this).val();
+            });
+
+            $('form').on('submit', function (e) {
+                e.preventDefault();
+
+                // Gather form data
+                var formData = $(this).serialize();
+                // 添加被按下按钮的信息
+                formData += '&button=' + buttonPressed;
+
+                // AJAX request
+                $.ajax({
+                    type: 'POST',
+                    url: '/s/search/',
+                    data: formData,
+                    success: function (data) {
+                        // Update the results container with the data
+                        var results = data.results;
+                        var resultsHtml = '';
+                        results.forEach(function (result) {
+                            var spanHtml = '';
+                            result.span.forEach(function (spanItem) {
+                                spanHtml += `<span class="tag-button">${spanItem}</span> `;
+                            });
+                            resultsHtml += `
+            <div class="result-item">
+                <h3><a href="${result.href}" target="bland">${result.title}</a></h3>
+                <p>${result.content}</p>
+                <div class="tag-buttons">
+                    ${spanHtml}
+                </div>
+            </div>
+        `;
+                        });
+                        $('#results-container').html(resultsHtml);
+
+                        // Handle pagination
+                        var totalItems = data.total_items;
+                        var itemsPerPage = 40;  // number of items per page
+                        var totalPages = Math.ceil(totalItems / itemsPerPage);
+                        var currentPage = data.current_page;
+
+                        var paginationHtml = '<nav aria-label="Page navigation example"><ul class="pagination justify-content-end">';
+                        if (currentPage > 1) {
+                            paginationHtml += `<li class="page-item"><a class="page-link" href="#" data-page="${currentPage - 1}">Previous</a></li>`;
+                        } else {
+                            paginationHtml += `<li class="page-item disabled"><a class="page-link" href="#">Previous</a></li>`;
+                        }
+                        for (var i = 1; i <= totalPages; i++) {
+                            if (i == currentPage || Math.abs(i - currentPage) <= 2 || i == 1 || i == totalPages) {
+                                if (i == currentPage) {
+                                    paginationHtml += `<li class="page-item active"><a class="page-link" href="#" data-page="${i}">${i}</a></li>`;
+                                } else {
+                                    paginationHtml += `<li class="page-item"><a class="page-link" href="#" data-page="${i}">${i}</a></li>`;
+                                }
+                            } else if (i - currentPage == 3 || currentPage - i == 3) {
+                                paginationHtml += `<li class="page-item disabled"><a class="page-link" href="#">...</a></li>`;
+                            }
+                        }
+                        if (currentPage < totalPages) {
+                            paginationHtml += `<li class="page-item"><a class="page-link" href="#" data-page="${currentPage + 1}">Next</a></li>`;
+                        } else {
+                            paginationHtml += `<li class="page-item disabled"><a class="page-link" href="#">Next</a></li>`;
+                        }
+                        paginationHtml += '</ul></nav>';
+                        $('#pagination-container').html(paginationHtml);
+
+                        // Add click event for page numbers
+                        $('.page-link').click(function (e) {
+                            e.preventDefault();
+                            var page = $(this).data('page');
+                            if (page) {
+                                submitFormWithPage(page);
+                            }
+                        });
+                    }
+                });
+            });
+        });
+    </script>
+    <style>
+        body {
+            background: #f4f4f4;
+            font-family: Arial, sans-serif;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: #202124;
+            font-size: 2rem;
+            text-align: center;
+            margin-top: 50px;
+        }
+
+        .search-box {
+            padding: 20px;
+            background: #fff;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 1px 6px 0 rgba(32, 33, 36, 0.28);
+        }
+
+        .search-box .form-group {
+            margin-bottom: 20px;
+        }
+
+        .search-box label {
+            font-size: 0.9rem;
+            color: #4d5156;
+        }
+
+        .search-box select,
+        .search-box input {
+            height: 38px;
+            width: 100%;
+            padding: 2px 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        .search-box input[type="submit"] {
+            background-color: #f8f9fa;
+            color: #3c4043;
+            border: none;
+            cursor: pointer;
+        }
+
+        .search-box input[type="submit"]:hover {
+            background-color: #e8e8e8;
+        }
+
+
+        .result-item {
+            padding: 20px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 1px 6px 0 rgba(32, 33, 36, 0.28);
+            margin-bottom: 20px;
+        }
+
+        .result-item h3 {
+            font-size: 1.2rem;
+            color: #202124;
+            margin-bottom: 5px;
+        }
+
+        .result-item h3 a {
+            text-decoration: none;
+            color: #1a0dab;
+        }
+
+        .result-item p {
+            font-size: 0.9rem;
+            color: #4d5156;
+            margin-bottom: 10px;
+        }
+
+        .tag-button {
+            display: inline-block;
+            padding: 2px 6px;
+            background-color: #f8f9fa;
+            color: #3c4043;
+            border-radius: 2px;
+            font-size: 0.8rem;
+            margin-right: 5px;
+            margin-bottom: 2px;
+        }
+
+        .pagination {
+            justify-content: center;
+        }
+        .d-flex {
+            margin: 27px -152px;
+        }
+        .mr-2 {
+            margin-right: 20px;
+        }
+    </style>
+
+
+</head>
+<body>
+<div class="container">
+    <h1>招标查询</h1>
+    <form action="/s/search/" method="post">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-3 form-group">
+                    <label for="zfcg">模块:</label>
+                    <select class="form-control" name="zfcg" id="zfcg">
+                        {% for name, value in zfcg_name.items %}
+                        <option value="{{ value }}">{{ name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3 form-group">
+                    <label for="bulletinType">公告类型:</label>
+                    <select class="form-control" name="bulletinType" id="bulletinType">
+                        {% for name, value in bulletinType.items %}
+                        <option value="{{ value }}">{{ name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-md-3 form-group">
+                    <label for="bidType">招标类型:</label>
+                    <select class="form-control" name="bidType" id="bidType">
+                        {% for name, value in bidType.items %}
+                        <option value="{{ value }}">{{ name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3 form-group">
+                    <label for="bidSort">公告类别:</label>
+                    <select class="form-control" name="bidSort" id="bidSort">
+                        {% for name, value in bidSort.items %}
+                        <option value="{{ value }}">{{ name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3 form-group">
+                    <label for="pinMu">品目:</label>
+                    <select class="form-control" name="pinMu" id="pinMu">
+                        {% for name, value in pinMu.items %}
+                        <option value="{{ value }}">{{ name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3 form-group">
+                    <label for="timeType">时间:</label>
+                    <select class="form-control" name="timeType" id="timeType">
+                        {% for name, value in timeType.items %}
+                        <option value="{{ value }}">{{ name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3 form-group">
+
+                    <label for="startDate">开始日期:</label>
+                    <input class="form-control" type="date" name="startDate" id="startDate">
+                </div>
+                <div class="col-md-3 form-group">
+                    <label for="endDate">结束日期:</label>
+                    <input class="form-control" type="date" name="endDate" id="endDate">
+                </div>
+                <div class="col-md-3 form-group">
+                    <label for="searchText">搜索标题:</label>
+                    <input class="form-control" type="text" name="search_text" id="searchText">
+                </div>
+                <div class="col-md-6 form-group">
+                    <div class="d-flex justify-content-end">
+                        <div class="mr-2">
+                            <input class="btn btn-primary btn-block" type="submit" value="标题搜索" name="button">
+                        </div>
+                        <div>
+                            <input class="btn btn-primary btn-block" type="submit" value="内容搜索" name="button">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </form>
+    <div id="results-container"></div>
+    <div id="pagination-container"></div>
+</div>
+<script src="{% static 'js/bootstrap.min.js' %}"></script>
+</body>
+</html>
