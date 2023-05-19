@@ -25,7 +25,6 @@ class Search(View):
         }
         return render(request, 'search.html', context)
 
-    @retry(tries=3)
     def async_request(self, name, body):
         try:
             return SpiderProxy.run(name, body)
