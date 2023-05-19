@@ -1,5 +1,5 @@
 import os
-bind = "0.0.0.0:9999"
+bind = "0.0.0.0:7777"
 workers = os.cpu_count()
 backlog = 2048
 timeout = 600
