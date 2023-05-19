@@ -93,7 +93,7 @@ class BaseProxy(ABC):
 
     @classmethod
     def merge(self, response_list):
-        max_page = max([i[2] for i in response_list])
+        max_page = max([i[2] for i in response_list if i])
         total = max_page * 40
         rs = []
         for i in response_list:
