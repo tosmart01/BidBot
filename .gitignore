@@ -113,7 +113,6 @@ celerybeat-schedule.db
 !apps/**/migrations/__init__.py
 media/workflow_import/*
 logs/
-static/*
 media/*
 settings/dev.py
 data/
