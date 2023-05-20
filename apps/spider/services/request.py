@@ -13,6 +13,7 @@ import requests
 from lxml import etree
 from urllib.parse import urlparse, parse_qsl, urlencode, urlunparse, unquote
 from django.core.cache import cache
+from retry import retry
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 
@@ -139,18 +140,18 @@ class CCGPProxy(BaseProxy):
         url_params.update(update_body)
         # 创建ChromeOptions对象，并设置无头模式
         chrome_options = Options()
-        chrome_options.add_argument('--headless')
+        # chrome_options.add_argument('--headless')
         chrome_options.add_argument('--no-sandbox')
         # 初始化WebDriver并传入ChromeOptions对象
         driver = webdriver.Chrome(options=chrome_options,executable_path='/usr/local/bin')
         url = update_url_params(base_url, url_params)
         driver.get('http://www.ccgp.gov.cn/')
-        logger.info(f"{self.source} url={url}, page={driver.page_source}")
         driver.delete_all_cookies()
         driver.find_element(value='doSearch1').click()
         driver.delete_all_cookies()
         driver.get(url)
         driver.delete_all_cookies()
+        logger.info(f"{self.source} url={url}, page={driver.page_source}")
         driver.find_element(value='inpDisplayZone').click()
         driver.delete_all_cookies()
         element = driver.find_element(by='class name', value='zone_list')
@@ -194,6 +195,7 @@ class ZFCGProxy(BaseProxy):
     page_size = 10
     source = '【来源：上海政府采购网】'
 
+    @retry(tries=3,delay=0.5)
     def request(self, body):
         head = {
             'Content-Type': 'application/json;charset=UTF-8'
@@ -247,6 +249,7 @@ class ctbpspProxy(BaseProxy):
     page_size = 10
     source = '【来源：全国招标公告公式搜索引擎】'
 
+    @retry(tries=3,delay=0.5)
     def request(self, body):
         """
         keyword: 上海国际招标有限公司
