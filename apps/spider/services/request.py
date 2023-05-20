@@ -140,10 +140,19 @@ class CCGPProxy(BaseProxy):
         url_params.update(update_body)
         # 创建ChromeOptions对象，并设置无头模式
         chrome_options = Options()
-        # chrome_options.add_argument('--headless')
+        chrome_options.add_argument('--headless')
         chrome_options.add_argument('--no-sandbox')
+        chrome_options.add_experimental_option('excludeSwitches', ['enable-automation'])
+        chrome_options.add_experimental_option('useAutomationExtension', False)
         # 初始化WebDriver并传入ChromeOptions对象
         driver = webdriver.Chrome(options=chrome_options,executable_path='/usr/local/bin')
+        driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {
+            "source": """
+            Object.defineProperty(navigator, 'webdriver', {
+              get: () => undefined
+            })
+          """
+        })
         url = update_url_params(base_url, url_params)
         driver.get('http://www.ccgp.gov.cn/')
         driver.delete_all_cookies()
